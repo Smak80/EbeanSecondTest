@@ -1,10 +1,14 @@
 package ru.smak;
 
+import io.ebean.DB;
 import ru.smak.model.Grade;
 import ru.smak.model.Student;
 import ru.smak.service.GradeService;
 import ru.smak.service.StudentService;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Scanner;
 
@@ -13,6 +17,18 @@ public class Main {
     private static final GradeService gradeService = new GradeService();
 
     public static void main(String[] args) {
+
+        try (Connection conn = DriverManager.getConnection(
+                "jdbc:postgresql://localhost:5432/student2025?currentSchema=public",
+                "postgres",
+                "postgres"
+        )) {
+            System.out.println("Подключение успешно!");
+            var stmt = conn.createStatement();
+            stmt.execute("CREATE table if not exists test(id serial not null, name varchar(50) not null)");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
         Scanner scanner = new Scanner(System.in);
         while (true) {
@@ -95,17 +111,25 @@ public class Main {
         System.out.print("Введите оценку: ");
         int score = scanner.nextInt();
 
-        Student student = studentService.getAllStudents().stream()
-                .filter(s -> s.getId().equals(studentId))
-                .findFirst()
-                .orElse(null);
+        final var t = DB.beginTransaction();
+        try {
+            Student student = studentService.getAllStudents().stream()
+                    .filter(s -> s.getId().equals(studentId))
+                    .findFirst()
+                    .orElse(null);
 
-        if (student != null) {
-            Grade grade = new Grade(subject, score, student);
-            gradeService.addGrade(grade);
-            System.out.println("Оценка добавлена");
-        } else {
-            System.out.println("Студент не найден");
+            if (student != null) {
+                Grade grade = new Grade(subject, score, student);
+                gradeService.addGrade(grade);
+                System.out.println("Оценка добавлена");
+            } else {
+                System.out.println("Студент не найден");
+            }
+            t.commit();
+        } catch (Exception e) {
+            t.rollback();
+        } finally {
+            t.close();
         }
     }
 
