@@ -1,0 +1,14 @@
+# Database configuration
+datasource:
+  default:
+  username: postgres
+  password: postgres
+  url: jdbc:postgresql://localhost:5432/student2025
+  driver: org.postgresql.Driver
+
+  # Ebean DDL configuration
+ebean:
+  ddl:
+    generate: false
+    run: false
+    mode: create-only

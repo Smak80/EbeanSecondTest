@@ -1,4 +1,4 @@
-package ru.smak.db;
+package ru.smak.model;
 
 import io.ebean.Model;
 import jakarta.persistence.*;
